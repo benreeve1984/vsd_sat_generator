@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>VSD SAT Procedure Generator</title>
+  <!-- Add marked library for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* Import Notion-like font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --notion-bg: #ffffff;
+      --notion-text: #37352f;
+      --notion-gray: #787774;
+      --notion-light-gray: #e9e9e8;
+      --notion-border: #e9e9e8;
+      --notion-hover: #f7f6f3;
+      --notion-blue: #0f7b6c;
+      --notion-red: #e03e3e;
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: var(--notion-text);
+      background: var(--notion-bg);
+      margin: 0;
+      padding: 1rem;
+      max-width: 900px;
+      margin: 0 auto;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: var(--notion-text);
+      line-height: 1.3;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 2rem 0 1rem;
+      color: var(--notion-text);
+      line-height: 1.3;
+    }
+
+    form {
+      background: var(--notion-bg);
+      border: 1px solid var(--notion-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 500;
+      color: var(--notion-text);
+      font-size: 0.95rem;
+    }
+
+    input, select {
+      width: 100%;
+      max-width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0 1rem;
+      border: 1px solid var(--notion-border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 1rem;
+      color: var(--notion-text);
+      background: var(--notion-bg);
+      transition: border-color 0.2s ease;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1em;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--notion-blue);
+      box-shadow: 0 0 0 2px rgba(15, 123, 108, 0.1);
+    }
+
+    button {
+      background: var(--notion-blue);
+      color: white;
+      border: none;
+      padding: 0.875rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      margin-top: 1rem;
+      width: 100%;
+      font-size: 1rem;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    button:hover {
+      background: #0d6b5d;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    #output {
+      display: none;
+    }
+
+    #output.rendered {
+      display: block;
+    }
+
+    #output.raw {
+      display: block;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Markdown rendering styles */
+    .rendered h1, .rendered h2 {
+      color: var(--notion-text);
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      line-height: 1.3;
+    }
+
+    .rendered h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .rendered h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .rendered p {
+      margin: 1rem 0;
+      line-height: 1.7;
+    }
+
+    .rendered ul, .rendered ol {
+      margin: 1rem 0;
+      padding-left: 1.5rem;
+    }
+
+    .rendered li {
+      margin: 0.5rem 0;
+    }
+
+    .rendered strong {
+      font-weight: 600;
+      color: var(--notion-text);
+    }
+
+    .rendered hr {
+      border: none;
+      border-top: 1px solid var(--notion-border);
+      margin: 2rem 0;
+    }
+
+    .rendered code {
+      background: var(--notion-light-gray);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9em;
+      word-break: break-word;
+    }
+
+    .rendered blockquote {
+      border-left: 3px solid var(--notion-blue);
+      margin: 1rem 0;
+      padding-left: 1rem;
+      color: var(--notion-gray);
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+      body {
+        padding: 0.75rem;
+      }
+
+      h1 {
+        font-size: 1.75rem;
+        margin-bottom: 1.25rem;
+      }
+
+      form, #output {
+        padding: 1rem;
+        border-radius: 6px;
+      }
+
+      input, select {
+        padding: 0.875rem;
+        font-size: 1rem;
+      }
+
+      button {
+        padding: 1rem;
+        font-size: 1rem;
+      }
+
+      #output {
+        font-size: 0.9rem;
+      }
+
+      #output h1 {
+        font-size: 1.4rem;
+      }
+
+      #output h2 {
+        font-size: 1.2rem;
+      }
+
+      /* Improve touch targets */
+      input, select, button {
+        min-height: 44px;
+      }
+
+      /* Add some breathing room between form elements */
+      label {
+        margin-top: 1.25rem;
+      }
+
+      /* Make lists more readable on mobile */
+      #output ul, #output ol {
+        padding-left: 1.25rem;
+      }
+
+      #output li {
+        margin: 0.75rem 0;
+      }
+
+      .output-controls {
+        flex-direction: column;
+      }
+
+      .output-controls button {
+        max-width: 100%;
+      }
+
+      .signature-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --notion-bg: #191919;
+        --notion-text: #ffffff;
+        --notion-gray: #a5a5a5;
+        --notion-light-gray: #2d2d2d;
+        --notion-border: #2d2d2d;
+        --notion-hover: #2d2d2d;
+      }
+
+      input, select {
+        background-color: var(--notion-light-gray);
+        color: var(--notion-text);
+      }
+
+      #output code {
+        background: var(--notion-light-gray);
+      }
+    }
+
+    /* Add new styles for output controls and markdown rendering */
+    .output-controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .output-controls button {
+      flex: 1;
+      min-width: 120px;
+      max-width: 200px;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .output-controls button svg {
+      width: 16px;
+      height: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>VSD SAT Procedure Generator</h1>
+
+<p style="color: var(--notion-gray); font-size: 0.9rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--notion-border); padding-bottom: 0.75rem;">
+  © 2024 Daniel Leyden. All rights reserved. This application and its generated content are protected by copyright law and are the intellectual property of Daniel Leyden.
+</p>
+
+<form id="vsdForm">
+  <label for="projectName">Project Name:</label>
+  <input type="text" id="projectName" placeholder="e.g. Building A Data Center" />
+
+  <label for="clientName">Client/End User:</label>
+  <input type="text" id="clientName" placeholder="e.g. ACME Corp" />
+
+  <label for="vsdBrand">VSD Brand & Model:</label>
+  <input type="text" id="vsdBrand" placeholder="e.g. ABB ACS580" />
+
+  <label for="motorRating">Motor Rating (kW):</label>
+  <input type="number" step="0.1" id="motorRating" placeholder="e.g. 15" />
+
+  <label for="numberOfDrives">Number of VSDs:</label>
+  <input type="number" id="numberOfDrives" min="1" value="1" />
+
+  <label for="controlMethod">Control Method:</label>
+  <select id="controlMethod">
+    <option value="V/f">V/f (Volts per Hertz)</option>
+    <option value="Sensorless Vector">Sensorless Vector</option>
+    <option value="Full Vector (Encoder)">Full Vector (Encoder)</option>
+  </select>
+
+  <label for="hasBypass">Does the system include a bypass or redundancy?</label>
+  <select id="hasBypass">
+    <option value="No">No</option>
+    <option value="Yes">Yes</option>
+  </select>
+
+  <label for="hasSTO">Does the drive include Safe Torque Off (STO) or safety interlocks?</label>
+  <select id="hasSTO">
+    <option value="No">No</option>
+    <option value="Yes">Yes</option>
+  </select>
+
+  <button type="button" onclick="generateProcedure()">Generate Procedure</button>
+</form>
+
+<div class="output-controls">
+  <button type="button" onclick="toggleView()" id="toggleButton">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+    Show Raw Markdown
+  </button>
+  <button type="button" onclick="copyToClipboard()" id="copyButton">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </svg>
+    Copy to Clipboard
+  </button>
+</div>
+
+<div id="output"></div>
+
+<script>
+/**
+ * Gathers form inputs and generates a comprehensive, best-practice SAT procedure
+ * for commissioning a Variable Speed Drive (VSD) in the UK, aligned with 
+ * HSE regulations, BS EN standards, IET Wiring Regulations, and more.
+ */
+function generateProcedure() {
+  // Gather user inputs
+  const projectName   = document.getElementById('projectName').value.trim() || "N/A";
+  const clientName    = document.getElementById('clientName').value.trim() || "N/A";
+  const vsdBrand      = document.getElementById('vsdBrand').value.trim() || "N/A";
+  const motorRating   = document.getElementById('motorRating').value.trim() || "N/A";
+  const numberOfDrives= document.getElementById('numberOfDrives').value.trim() || "1";
+  const controlMethod = document.getElementById('controlMethod').value;
+  const hasBypass     = document.getElementById('hasBypass').value;
+  const hasSTO        = document.getElementById('hasSTO').value;
+
+  // Build the expanded best-practice procedure
+  let stoIntegration = (hasSTO === "Yes")
+    ? `- **Safe Torque Off (STO) & Safety Interlocks**:
+   - Verify all safety-related circuits involving STO or guard-switches.
+   - Test dual-channel STO if present. With the motor at a safe speed, trigger an E-stop or open the safety circuit to confirm the drive output is disabled.
+   - Acceptance: Drive ceases output immediately, no auto-restart on reset.
+   - Rationale: BS EN 61800-5-2 requires verifying STO for functional safety. Reset must not auto-start, preventing unexpected restarts.
+`
+    : `- **Emergency Stop Integration**:
+   - Test the site E-stop or safety circuits to confirm the VSD stops safely (coast or controlled stop).
+   - Acceptance: E-stop instantly disables drive output; no auto-restart on reset.
+   - Rationale: Complies with BS EN 60204-1 for machinery safety and PUWER.`;
+
+  let bypassIntegration = (hasBypass === "Yes")
+    ? `3. **Bypass/Redundancy**:
+   - If the system has a bypass contactor or redundant VSD, simulate a drive failure and transfer motor to bypass or redundant drive.
+   - Acceptance: Motor runs safely in bypass mode or on secondary drive; no overlap/backfeeding.
+   - Rationale: Ensures uptime in the event of primary VSD failure; verifies correct interlocking to avoid unsafe simultaneous energization.
+`
+    : ``;
+
+  let output = `# Site Acceptance Test (SAT) Procedure for Variable Speed Drive (VSD)
+
+**Project Name:** ${projectName}  
+**Client/End User:** ${clientName}  
+**VSD Model(s):** ${vsdBrand}  
+**Motor Rating (kW):** ${motorRating}  
+**Number of VSD Units to Test:** ${numberOfDrives}  
+**Drive Control Method:** ${controlMethod}
+
+This **Site Acceptance Test (SAT)** procedure follows UK best practices and standards including the **Health and Safety at Work Act**, **Electricity at Work Regulations (EAWR) 1989**, **PUWER 1998**, **BS EN 60204-1**, **BS 7671 (IET Wiring Regs)**, and **BS EN 61800 series**. It integrates manufacturer recommendations for **${vsdBrand}** to ensure **safe, compliant, and optimal** VSD installation and commissioning.
+
+---
+
+## Purpose
+
+This document provides a **comprehensive** SAT commissioning procedure for Variable Speed Drives (VSDs) in applications like manufacturing, HVAC, water utilities, and data centers. It references **relevant British Standards**, HSE regulations, and IET Wiring Regulations. Each step has rationale, acceptance criteria, and data recording requirements. **Follow all optional or conditional steps** if they apply (e.g., STO, bypass, multi-motor).
+
+---
+
+## Responsibilities
+
+- **Commissioning Engineer**:  
+  Leads the SAT, coordinates tests, documents results, ensures compliance with relevant standards.  
+- **Site Electrical Engineer**:  
+  Verifies site readiness, checks installation/wiring, assists in addressing any non-conformances.  
+- **Client/End User Representative**:  
+  Observes commissioning, reviews test results, signs off on successful completion.  
+- **OEM/Vendor Representative (Optional)**:  
+  Provides technical support on drive configuration, warranty conditions, advanced troubleshooting.  
+- **Health & Safety Officer (Optional)**:  
+  Oversees safe work environment, ensures compliance with site permits, lockout/tagout, and EAWR.
+
+---
+
+## 1. Health & Safety Checks
+
+Before energizing or testing, enforce rigorous safety measures as per **Health and Safety at Work Act** and **EAWR 1989**:
+
+1. **Isolation & Lockout (LOTO)**:
+   - Verify all VSD and motor energy sources are isolated, locked, and tagged per EAWR Reg.13.
+   - Use GS38-compliant voltage testers to confirm zero voltage on all incoming terminals.
+   - **Acceptance**: Lockout devices in place on main isolators; tester shows 0 V.
+   - **Rationale**: Prevents live commissioning hazards and fulfills legal duties (EAWR). Avoid arc flash/electric shock.
+
+2. **Permits & PPE**:
+   - Implement a Permit-to-Work system. Ensure a risk assessment covers mechanical rotation hazards, stored energy (capacitors), etc.
+   - All personnel must be electrically competent (EAWR Reg.16) and wear PPE (insulated gloves, goggles, etc.).
+   - **Acceptance**: Signed permit, toolbox talk done, PPE checklist complete.
+   - **Rationale**: Formal processes ensure hazard awareness and HSE compliance.
+
+3. **Area Safety & Emergency Preparedness**:
+   - Secure the work area with warning signs and barricades; ensure adequate lighting/access.
+   - Dry-run E-stop checks (mechanical latch/reset) and verify any emergency disconnect or fire alarm trip logic if installed.
+   - **Acceptance**: Area clear of non-essential personnel; E-stops operate correctly.
+   - **Rationale**: A controlled environment with functional E-stops ensures rapid response if faults occur.
+
+> **If any Health & Safety check fails**, **do not** proceed. Rectify the issue and document corrective actions.
+
+---
+
+## 2. Equipment Inspection (Pre-Power Checks)
+
+Follow **BS 7671, BS EN 60204-1**, and manufacturer's guidelines to confirm correct installation:
+
+1. **Mechanical Installation**:
+   - Inspect VSD enclosure for damage, confirm correct mounting and ventilation clearances per manual.
+   - **Acceptance**: Drive is intact, secured, unobstructed airflow; shipping brackets removed if present.
+   - **Rationale**: Prevent overheating, vibration failures.
+
+2. **Nameplate & Ratings Check**:
+   - Cross-check drive rating vs. motor nameplate and design specs: Voltage, current, power (kW).
+   - **Motor Rating**: ${motorRating} kW; **VSD**: ${vsdBrand}
+   - **Acceptance**: VSD rated ≥ motor FLC; supply voltage/frequency match site; IP/overload rating meets project.
+   - **Rationale**: Ensures compliance with **BS EN 61800-5-1** and proper drive/motor coordination.
+
+3. **Wiring & Connections**:
+   - Check all power/control cables per design drawings & **IET Wiring Regs**. Tighten terminals to specified torque.
+   - Ensure correct color coding, labeling, and cable glands.
+   - **Acceptance**: No loose connections, correct cable sizes for load/harmonics, all labeled correctly.
+   - **Rationale**: Loose or undersized wiring causes overheating/fire risk. Complies with BS 7671.
+
+4. **Earthing & Bonding**:
+   - Measure earth continuity/impedance (ZE), confirm cable shields are earthed properly (power cables typically both ends, control cables typically one end).
+   - **Acceptance**: Earth loop impedance ensures correct disconnection times, shield bonding verified.
+   - **Rationale**: Critical for safety and EMC. **Inadequate earthing** = shock/EMI risk.
+
+5. **Supply Protection & Isolation**:
+   - Verify upstream fuses/circuit breakers match VSD specs (e.g. type gG fuses, correct rating).
+   - Confirm isolator or circuit breaker is lockable and labeled.
+   - **Acceptance**: Protective devices per manufacturer guide; isolator meets **BS EN 60947-3** or relevant standard.
+   - **Rationale**: Proper overcurrent and surge protection prevents drive/motor damage.
+
+6. **Filters, Chokes & Auxiliaries**:
+   - Check presence of line reactors, harmonic filters, EMI filters, etc., installed in correct sequence.
+   - If dynamic braking resistor or fans are required, verify wiring and voltage taps.
+   - **Acceptance**: All auxiliaries properly mounted and not bypassed.
+   - **Rationale**: EMC compliance (BS EN 61800-3) and harmonic mitigation (G5/4 or G5/5) require correct filtering.
+
+7. **Motor & Load**:
+   - Confirm motor rotates freely (no seized gearboxes/valves). Decouple if feasible for initial tests.
+   - **Acceptance**: No mechanical binding, correct alignment if coupled.
+   - **Rationale**: Avoid drive/motor damage from jammed load at startup.
+
+8. **Pre-power Electrical Tests**:
+   - Perform insulation resistance (megger) tests with VSD disconnected. Check supply phase rotation.
+   - **Acceptance**: Insulation >100 MΩ (typical), correct phase sequence to match motor windings.
+   - **Rationale**: Complies with BS 7671 & BS EN 60204-1. Prevent immediate failures on energizing.
+
+> **If any inspection step fails**, document and correct before power-up.
+
+---
+
+## 3. Functional Testing (No-Load/Initial Power-Up)
+
+Once the installation checks pass:
+
+1. **Initial Power-Up**:
+   - Energize the VSD from the isolator/breaker. Observe any self-tests or fault codes.
+   - Confirm supply voltage/frequency within ±10% nominal.
+   - **Acceptance**: No alarms, drive display/keypad operational, fans run if triggered.
+   - **Rationale**: Ensures internal health checks pass. EAWR requires the system to be safe before continuing.
+
+2. **Parameter Configuration (Drive Setup)**:
+   - Enter motor nameplate data (rated voltage, current, freq, speed), set control method (${controlMethod}).
+   - Configure overload protection, acceleration/deceleration ramps, min/max speed.
+   - **Acceptance**: Parameter storage with no conflicts. Overload set ~100% FLC or as per motor thermal time.
+   - **Rationale**: **BS EN 61800-5-1** mandates correct drive parameters for safe and effective operation.
+
+3. **Control Circuit Checks**:
+   - Verify local/remote start-stop, digital/analog I/O, and any "Drive Healthy"/"Fault" signals.
+   - For remote command, simulate a run signal (4–20 mA/0–10 V or contact).
+   - **Acceptance**: Drive recognizes commands, toggles states as expected. No unexpected runs.
+   - **Rationale**: Aligns with BS EN 60204-1 machine control checks. Ensures correct wiring logic.
+
+4. **Bump Test (Rotation Direction)**:
+   - Briefly jog the motor at low frequency (~1 Hz) to confirm correct rotation.
+   - **Acceptance**: Correct direction per design (e.g. pump orientation). If reversed, safely swap phases.
+   - **Rationale**: Protects equipment from damage (backward pump rotation, etc.).
+
+5. **No-Load Run Test**:
+   - With the motor uncoupled or lightly loaded, run up to ~50% speed, monitor current/vibration.
+   - Optionally perform auto-tuning if required for vector control.
+   - **Acceptance**: Smooth acceleration, stable current, no abnormal noise/trips.
+   - **Rationale**: Proves basic drive-motor stability before full-load. Detects tuning issues early.
+
+6. **Protective Function Tests**:
+   - Simulate an overload or benign fault to check the drive's trip response. Observe any fault codes.
+   - **Acceptance**: Overload/fault triggers drive to safe stop, correct alarm displayed.
+   - **Rationale**: Ensures motor/drive protection per BS EN 60204-1 & 61800-5-1.
+
+---
+
+## 4. Control Integration
+
+Many VSDs interface with a wider control system (PLC, BMS, SCADA). Verify correct integration:
+
+1. **Fieldbus/Communication Integration (If Applicable)**:
+   - If using Modbus, Profibus/PROFINET, Ethernet/IP, etc., confirm the drive is recognized on the network.
+   - Send remote commands (start/stop, speed setpoint) from SCADA/HMI, observe status feedback.
+   - **Acceptance**: No comms faults, accurate remote read/write of frequency/current/fault states.
+   - **Rationale**: Ensures BMS/PLC can fully control and monitor the VSD.
+
+2. **Analog & Digital I/O Tests**:
+   - Calibrate analog inputs (4–20 mA / 0–10 V) and check digital signals (run permissive, interlocks).
+   - **Acceptance**: Analog scaling correct; digital signals yield the intended VSD response.
+   - **Rationale**: Proper signal integrity ensures reliable operation (e.g. no unintended starts).
+
+${stoIntegration}
+
+2. **System Interactions**:
+   - If multiple drives or controllers operate in sequence (e.g. lead-lag pumps), simulate relevant conditions.
+   - If a fire alarm or emergency condition must override the drive, test it.
+   - **Acceptance**: Drive responds to system logic without conflict or downtime.
+   - **Rationale**: Verifies no control logic omissions that might cause unsafe or unexpected operations.
+
+${bypassIntegration}\
+---
+
+## 5. Performance Testing (Loaded Tests & Tuning)
+
+After confirming basic functionality, test under normal operating conditions to ensure design performance:
+
+1. **Coupling & Gradual Start-Up**:
+   - Re-couple the load if decoupled; ensure guards are fitted. Ramp speed in steps (25%, 50%, 75%, 100%).
+   - **Acceptance**: Smooth load uptake, no excessive vibration/noise, current stays within drive rating.
+   - **Rationale**: Catch mechanical issues (misalignment, resonance) and confirm torque capability.
+
+2. **Full Load Testing**:
+   - Run at maximum required load. Record output frequency, current, motor temperature, process parameters (flow, pressure).
+   - **Acceptance**: Meets design performance, no overload or thermal alarms, stable operation.
+   - **Rationale**: Proves sustained duty capability. Provides baseline data for future maintenance.
+
+3. **Dynamic Performance & Stability**:
+   - For variable setpoints or PID control, step the command up/down. Observe response times, overshoot, hunting.
+   - **Acceptance**: Stable speed/torque control, no nuisance tripping. Decelerations handle inertia without bus overvoltage.
+   - **Rationale**: Ensures robust control tuning. Minimizes process fluctuations or motor stress.
+
+4. **Power Quality & Thermal Checks**:
+   - If needed, measure total harmonic distortion (THD) to comply with G5/4 or site agreements. Check drive/cable temps.
+   - **Acceptance**: THD within limit, no excessive heating of drive or cables.
+   - **Rationale**: Drives generate harmonics; verifying compliance prevents utility/facility issues. Ensures safe thermal performance.
+
+5. **Redundancy/Bypass Testing (If Applicable)**:
+   - If **Yes** to bypass/redundancy, confirm a seamless switchover under load or safe stop to re-route supply.
+   - **Acceptance**: Bypass or redundant drive fully operational, no backfeeding or safety interlocks missed.
+   - **Rationale**: Ensures process uptime if main VSD fails; checks correct isolation logic.
+
+---
+
+## 6. Documentation & Handover
+
+Proper documentation is a legal and best-practice requirement (EAWR, PUWER, BS 7671, etc.):
+
+1. **Test Records**:
+   - Complete a commissioning checklist/report: record insulation values, loop impedance, FLC readings, final parameters.
+   - **Acceptance**: Signed SAT report with all results (pass/fail). Any corrective actions noted.
+   - **Rationale**: EAWR & BS 7671 require evidence of safe condition. Baseline data for maintenance.
+
+2. **Regulatory Compliance Documentation**:
+   - Attach or reference the Electrical Installation Certificate (BS 7671), PUWER Reg.6 inspection record, manufacturer's startup forms.
+   - **Acceptance**: All compliance docs compiled for **${clientName}** (installation certs, warranties, etc.).
+   - **Rationale**: Legally required for safe operation under UK law, helps in audits/warranty claims.
+
+3. **As-Built Drawings & Parameter Backup**:
+   - Update electrical schematics to reflect final wiring changes. Save drive parameters to file/hard copy.
+   - **Acceptance**: Marked-up "as-installed" drawings archived; parameter set included in O&M manuals.
+   - **Rationale**: Future troubleshooting/maintenance depends on accurate records.
+
+4. **Operation & Maintenance Manuals**:
+   - Provide the **VSD manual**, any ancillaries' manuals, and highlight safety warnings (e.g. capacitor discharge).
+   - **Acceptance**: End user has complete O&M instructions, aware of scheduled maintenance.
+   - **Rationale**: PUWER Reg.8 demands adequate info for safe equipment use. Ensures user compliance.
+
+---
+
+## 7. Operator Training & Final Handover
+
+1. **Operator Training**:
+   - Conduct training on local/remote start-stop procedures, adjusting speed/setpoints, reading fault codes.
+   - Emphasize E-stop usage and lockout steps before any work on drive/motor.
+   - **Acceptance**: Operators can confidently start/stop, handle minor faults. (Optional Q&A or quiz.)
+   - **Rationale**: **PUWER Reg.9**: staff must be trained in safe operation. Reduces misuse or unsafe overrides.
+
+2. **Safety Instructions**:
+   - If auto-restart is enabled, place warning labels. Clarify potential unexpected starts after power loss.
+   - **Acceptance**: Operators sign off understanding site-specific safety notes.
+   - **Rationale**: Complies with BS EN 60204-1 & HSE. Minimizes risk of accidental restarts or injuries.
+
+3. **Maintenance Handover**:
+   - Discuss routine checks: tightening terminals (thermal cycling), cleaning filters, updating firmware, etc.
+   - **Acceptance**: Maintenance team has a schedule and relevant tools/software for the VSD.
+   - **Rationale**: Proper upkeep extends VSD life, prevents failures or safety incidents.
+
+4. **Final Sign-Off**:
+   - All parties (engineering, safety, client) sign the SAT completion. Log any pending items (e.g. final load test).
+   - **Acceptance**: Signed handover; punch list items assigned if needed.
+   - **Rationale**: Formal record that equipment is safe, tested, and accepted for service. Transfers responsibility to operations.
+
+---
+
+## References & Best Practice Standards
+
+- **Health & Safety at Work Act** (1974, as amended)  
+- **Electricity at Work Regulations (EAWR) 1989**  
+- **Provision and Use of Work Equipment Regulations (PUWER) 1998**  
+- **BS EN 60204-1** (Safety of Machinery—Electrical Equipment)  
+- **BS 7671** (IET Wiring Regulations, current edition)  
+- **BS EN 61800** (Adjustable speed electrical power drive systems)  
+- **BSRIA & CIBSE Commissioning Guides** (for building services/HVAC best practices)  
+- **Manufacturer's Documentation** (e.g. ${vsdBrand} Startup & Installation Guide)  
+
+> **Note**: If the VSD is part of larger machinery with **functional safety** requirements (EN 62061 / EN ISO 13849-1) or subject to additional **environmental/energy regulations**, ensure those steps are integrated.  
+
+---
+
+**End of SAT Procedure**  
+(Once fully completed, sign off below.)
+
+<div style="margin-top: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+  <div>
+    <p style="margin-bottom: 0.5rem;"><strong>Commissioning Engineer:</strong></p>
+    <div style="border-bottom: 1px solid var(--notion-border); margin-bottom: 1rem; 
+                padding-bottom: 0.5rem; min-height: 2rem;"></div>
+    <p style="margin-bottom: 0.5rem;"><strong>Date:</strong></p>
+    <div style="border-bottom: 1px solid var(--notion-border); min-height: 2rem;"></div>
+  </div>
+  <div>
+    <p style="margin-bottom: 0.5rem;"><strong>Client/End User Representative:</strong></p>
+    <div style="border-bottom: 1px solid var(--notion-border); margin-bottom: 1rem; 
+                padding-bottom: 0.5rem; min-height: 2rem;"></div>
+    <p style="margin-bottom: 0.5rem;"><strong>Date:</strong></p>
+    <div style="border-bottom: 1px solid var(--notion-border); min-height: 2rem;"></div>
+  </div>
+  <div>
+    <p style="margin-bottom: 0.5rem;"><strong>VSD OEM Rep (optional):</strong></p>
+    <div style="border-bottom: 1px solid var(--notion-border); margin-bottom: 1rem; 
+                padding-bottom: 0.5rem; min-height: 2rem;"></div>
+    <p style="margin-bottom: 0.5rem;"><strong>Date:</strong></p>
+    <div style="border-bottom: 1px solid var(--notion-border); min-height: 2rem;"></div>
+  </div>
+</div>
+`;
+
+  // Insert the final output text in the #output div and render as Markdown
+  const outputElement = document.getElementById('output');
+  outputElement.textContent = output;       // fallback text
+  outputElement.classList.add('rendered'); 
+  outputElement.innerHTML = marked.parse(output);
+}
+
+function toggleView() {
+  const outputElement = document.getElementById('output');
+  const toggleButton = document.getElementById('toggleButton');
+  const isRendered = outputElement.classList.contains('rendered');
+  
+  if (isRendered) {
+    // Switch to raw text view
+    outputElement.classList.remove('rendered');
+    outputElement.classList.add('raw');
+    toggleButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+      Show Rendered
+    `;
+  } else {
+    // Switch to rendered Markdown view
+    outputElement.classList.remove('raw');
+    outputElement.classList.add('rendered');
+    toggleButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+      Show Raw Markdown
+    `;
+  }
+}
+
+function copyToClipboard() {
+  const outputElement = document.getElementById('output');
+  const text = outputElement.classList.contains('rendered') 
+    ? outputElement.innerText 
+    : outputElement.textContent;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    const copyButton = document.getElementById('copyButton');
+    const originalText = copyButton.innerHTML;
+    copyButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      Copied!
+    `;
+    setTimeout(() => {
+      copyButton.innerHTML = originalText;
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy text: ', err);
+  });
+}
+</script>
+
+</body>
+</html> 

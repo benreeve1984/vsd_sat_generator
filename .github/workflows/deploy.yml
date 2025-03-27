@@ -1,0 +1,55 @@
+name: Deploy to AWS S3
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2  # Change this to your preferred region
+          
+      - name: Deploy to S3
+        run: |
+          # Sync files to S3
+          aws s3 sync . s3://your-bucket-name --delete --exclude ".git/*" --exclude ".github/*"
+          
+          # Ensure index.html has correct content type
+          aws s3 cp s3://your-bucket-name/index.html s3://your-bucket-name/index.html --content-type "text/html"
+          
+          # Ensure bucket policy allows public read access
+          aws s3api put-bucket-policy --bucket your-bucket-name --policy '{
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "PublicReadGetObject",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::your-bucket-name/*"
+              }
+            ]
+          }'
+          
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+          
+      - name: Verify Deployment
+        run: |
+          # Wait a few seconds for CloudFront to propagate
+          sleep 10
+          
+          # Check if the site is accessible
+          curl -I https://${{ secrets.CLOUDFRONT_DOMAIN }}
+          
+          # Check if index.html is accessible
+          curl -I https://${{ secrets.CLOUDFRONT_DOMAIN }}/index.html 

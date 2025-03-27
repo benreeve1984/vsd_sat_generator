@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>VSD SAT Procedure Generator</title>
   <!-- Add marked library for markdown rendering -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
   <style>
     /* Import Notion-like font */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -23,6 +23,7 @@
 
     * {
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
       box-sizing: border-box;
     }
 
@@ -72,20 +73,23 @@
       font-size: 0.95rem;
     }
 
+    input, select, button {
+      -webkit-appearance: none;
+      appearance: none;
+      border-radius: 6px;
+    }
+
     input, select {
       width: 100%;
       max-width: 100%;
       padding: 0.75rem;
       margin: 0.5rem 0 1rem;
       border: 1px solid var(--notion-border);
-      border-radius: 6px;
       font-family: inherit;
       font-size: 1rem;
       color: var(--notion-text);
       background: var(--notion-bg);
       transition: border-color 0.2s ease;
-      -webkit-appearance: none;
-      appearance: none;
       background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
       background-repeat: no-repeat;
       background-position: right 0.75rem center;
@@ -103,15 +107,12 @@
       color: white;
       border: none;
       padding: 0.875rem 1.5rem;
-      border-radius: 6px;
       font-weight: 500;
       cursor: pointer;
       transition: background-color 0.2s ease;
       margin-top: 1rem;
       width: 100%;
       font-size: 1rem;
-      -webkit-appearance: none;
-      appearance: none;
     }
 
     button:hover {
@@ -722,9 +723,15 @@ Proper documentation is a legal and best-practice requirement (EAWR, PUWER, BS 7
 
   // Insert the final output text in the #output div and render as Markdown
   const outputElement = document.getElementById('output');
-  outputElement.textContent = output;       // fallback text
-  outputElement.classList.add('rendered'); 
-  outputElement.innerHTML = marked.parse(output);
+  outputElement.textContent = output;
+  outputElement.classList.add('rendered');
+  
+  // Add this line to ensure proper initialization of marked
+  if (typeof marked !== 'undefined') {
+    outputElement.innerHTML = marked.parse(output);
+  } else {
+    console.error('Marked library not loaded');
+  }
 }
 
 function toggleView() {
@@ -765,22 +772,61 @@ function copyToClipboard() {
     ? outputElement.innerText 
     : outputElement.textContent;
   
-  navigator.clipboard.writeText(text).then(() => {
-    const copyButton = document.getElementById('copyButton');
-    const originalText = copyButton.innerHTML;
-    copyButton.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
-           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-      Copied!
-    `;
-    setTimeout(() => {
-      copyButton.innerHTML = originalText;
-    }, 2000);
-  }).catch(err => {
-    console.error('Failed to copy text: ', err);
-  });
+  // Add fallback for Safari
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => updateCopyButton())
+      .catch(err => {
+        console.error('Failed to copy text: ', err);
+        // Fallback for Safari
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          updateCopyButton();
+        } catch (err) {
+          console.error('Fallback: Could not copy text: ', err);
+        }
+        document.body.removeChild(textArea);
+      });
+  } else {
+    // Direct fallback if Clipboard API is not available
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      updateCopyButton();
+    } catch (err) {
+      console.error('Fallback: Could not copy text: ', err);
+    }
+    document.body.removeChild(textArea);
+  }
+}
+
+// Separate function for updating copy button UI
+function updateCopyButton() {
+  const copyButton = document.getElementById('copyButton');
+  const originalText = copyButton.innerHTML;
+  copyButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    Copied!
+  `;
+  setTimeout(() => {
+    copyButton.innerHTML = originalText;
+  }, 2000);
 }
 </script>
 

@@ -3,11 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>VSD SAT Procedure Generator</title>
   <!-- Add marked library for markdown rendering -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* Import Notion-like font */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -382,58 +380,44 @@
 <div id="output"></div>
 
 <script>
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialize marked with safe defaults
-  marked.setOptions({
-    sanitize: true,
-    breaks: true,
-    gfm: true
-  });
-
-  // Add error handling for marked
-  window.marked = marked;
-});
-
 /**
  * Gathers form inputs and generates a comprehensive, best-practice SAT procedure
  * for commissioning a Variable Speed Drive (VSD) in the UK, aligned with 
  * HSE regulations, BS EN standards, IET Wiring Regulations, and more.
  */
 function generateProcedure() {
-  try {
-    // Gather user inputs
-    const projectName   = document.getElementById('projectName').value.trim() || "N/A";
-    const clientName    = document.getElementById('clientName').value.trim() || "N/A";
-    const vsdBrand      = document.getElementById('vsdBrand').value.trim() || "N/A";
-    const motorRating   = document.getElementById('motorRating').value.trim() || "N/A";
-    const numberOfDrives= document.getElementById('numberOfDrives').value.trim() || "1";
-    const controlMethod = document.getElementById('controlMethod').value;
-    const hasBypass     = document.getElementById('hasBypass').value;
-    const hasSTO        = document.getElementById('hasSTO').value;
+  // Gather user inputs
+  const projectName   = document.getElementById('projectName').value.trim() || "N/A";
+  const clientName    = document.getElementById('clientName').value.trim() || "N/A";
+  const vsdBrand      = document.getElementById('vsdBrand').value.trim() || "N/A";
+  const motorRating   = document.getElementById('motorRating').value.trim() || "N/A";
+  const numberOfDrives= document.getElementById('numberOfDrives').value.trim() || "1";
+  const controlMethod = document.getElementById('controlMethod').value;
+  const hasBypass     = document.getElementById('hasBypass').value;
+  const hasSTO        = document.getElementById('hasSTO').value;
 
-    // Build the expanded best-practice procedure
-    let stoIntegration = (hasSTO === "Yes")
-      ? `- **Safe Torque Off (STO) & Safety Interlocks**:
-     - Verify all safety-related circuits involving STO or guard-switches.
-     - Test dual-channel STO if present. With the motor at a safe speed, trigger an E-stop or open the safety circuit to confirm the drive output is disabled.
-     - Acceptance: Drive ceases output immediately, no auto-restart on reset.
-     - Rationale: BS EN 61800-5-2 requires verifying STO for functional safety. Reset must not auto-start, preventing unexpected restarts.
-    `
-      : `- **Emergency Stop Integration**:
-     - Test the site E-stop or safety circuits to confirm the VSD stops safely (coast or controlled stop).
-     - Acceptance: E-stop instantly disables drive output; no auto-restart on reset.
-     - Rationale: Complies with BS EN 60204-1 for machinery safety and PUWER.`;
+  // Build the expanded best-practice procedure
+  let stoIntegration = (hasSTO === "Yes")
+    ? `- **Safe Torque Off (STO) & Safety Interlocks**:
+   - Verify all safety-related circuits involving STO or guard-switches.
+   - Test dual-channel STO if present. With the motor at a safe speed, trigger an E-stop or open the safety circuit to confirm the drive output is disabled.
+   - Acceptance: Drive ceases output immediately, no auto-restart on reset.
+   - Rationale: BS EN 61800-5-2 requires verifying STO for functional safety. Reset must not auto-start, preventing unexpected restarts.
+`
+    : `- **Emergency Stop Integration**:
+   - Test the site E-stop or safety circuits to confirm the VSD stops safely (coast or controlled stop).
+   - Acceptance: E-stop instantly disables drive output; no auto-restart on reset.
+   - Rationale: Complies with BS EN 60204-1 for machinery safety and PUWER.`;
 
-    let bypassIntegration = (hasBypass === "Yes")
-      ? `3. **Bypass/Redundancy**:
-     - If the system has a bypass contactor or redundant VSD, simulate a drive failure and transfer motor to bypass or redundant drive.
-     - Acceptance: Motor runs safely in bypass mode or on secondary drive; no overlap/backfeeding.
-     - Rationale: Ensures uptime in the event of primary VSD failure; verifies correct interlocking to avoid unsafe simultaneous energization.
-    `
-      : ``;
+  let bypassIntegration = (hasBypass === "Yes")
+    ? `3. **Bypass/Redundancy**:
+   - If the system has a bypass contactor or redundant VSD, simulate a drive failure and transfer motor to bypass or redundant drive.
+   - Acceptance: Motor runs safely in bypass mode or on secondary drive; no overlap/backfeeding.
+   - Rationale: Ensures uptime in the event of primary VSD failure; verifies correct interlocking to avoid unsafe simultaneous energization.
+`
+    : ``;
 
-    let output = `# Site Acceptance Test (SAT) Procedure for Variable Speed Drive (VSD)
+  let output = `# Site Acceptance Test (SAT) Procedure for Variable Speed Drive (VSD)
 
 **Project Name:** ${projectName}  
 **Client/End User:** ${clientName}  
@@ -736,109 +720,67 @@ Proper documentation is a legal and best-practice requirement (EAWR, PUWER, BS 7
 </div>
 `;
 
-    // Insert the final output text in the #output div and render as Markdown
-    const outputElement = document.getElementById('output');
-    if (!outputElement) {
-      console.error('Output element not found');
-      return;
-    }
-
-    outputElement.textContent = output;       // fallback text
-    outputElement.classList.add('rendered'); 
-    
-    // Ensure marked is available
-    if (typeof marked === 'undefined') {
-      console.error('Marked library not loaded');
-      return;
-    }
-    
-    outputElement.innerHTML = marked.parse(output);
-  } catch (error) {
-    console.error('Error generating procedure:', error);
-    alert('An error occurred while generating the procedure. Please try again.');
-  }
+  // Insert the final output text in the #output div and render as Markdown
+  const outputElement = document.getElementById('output');
+  outputElement.textContent = output;       // fallback text
+  outputElement.classList.add('rendered'); 
+  outputElement.innerHTML = marked.parse(output);
 }
 
 function toggleView() {
-  try {
-    const outputElement = document.getElementById('output');
-    const toggleButton = document.getElementById('toggleButton');
-    if (!outputElement || !toggleButton) {
-      console.error('Required elements not found');
-      return;
-    }
-
-    const isRendered = outputElement.classList.contains('rendered');
-    
-    if (isRendered) {
-      // Switch to raw text view
-      outputElement.classList.remove('rendered');
-      outputElement.classList.add('raw');
-      toggleButton.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-        Show Rendered
-      `;
-    } else {
-      // Switch to rendered Markdown view
-      outputElement.classList.remove('raw');
-      outputElement.classList.add('rendered');
-      toggleButton.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-        Show Raw Markdown
-      `;
-    }
-  } catch (error) {
-    console.error('Error toggling view:', error);
-    alert('An error occurred while toggling the view. Please try again.');
+  const outputElement = document.getElementById('output');
+  const toggleButton = document.getElementById('toggleButton');
+  const isRendered = outputElement.classList.contains('rendered');
+  
+  if (isRendered) {
+    // Switch to raw text view
+    outputElement.classList.remove('rendered');
+    outputElement.classList.add('raw');
+    toggleButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+      Show Rendered
+    `;
+  } else {
+    // Switch to rendered Markdown view
+    outputElement.classList.remove('raw');
+    outputElement.classList.add('rendered');
+    toggleButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+      Show Raw Markdown
+    `;
   }
 }
 
 function copyToClipboard() {
-  try {
-    const outputElement = document.getElementById('output');
-    if (!outputElement) {
-      console.error('Output element not found');
-      return;
-    }
-
-    const text = outputElement.classList.contains('rendered') 
-      ? outputElement.innerText 
-      : outputElement.textContent;
-    
-    navigator.clipboard.writeText(text).then(() => {
-      const copyButton = document.getElementById('copyButton');
-      if (!copyButton) {
-        console.error('Copy button not found');
-        return;
-      }
-
-      const originalText = copyButton.innerHTML;
-      copyButton.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        Copied!
-      `;
-      setTimeout(() => {
-        copyButton.innerHTML = originalText;
-      }, 2000);
-    }).catch(err => {
-      console.error('Failed to copy text: ', err);
-      alert('Failed to copy text to clipboard. Please try again.');
-    });
-  } catch (error) {
-    console.error('Error copying to clipboard:', error);
-    alert('An error occurred while copying to clipboard. Please try again.');
-  }
+  const outputElement = document.getElementById('output');
+  const text = outputElement.classList.contains('rendered') 
+    ? outputElement.innerText 
+    : outputElement.textContent;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    const copyButton = document.getElementById('copyButton');
+    const originalText = copyButton.innerHTML;
+    copyButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" 
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      Copied!
+    `;
+    setTimeout(() => {
+      copyButton.innerHTML = originalText;
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy text: ', err);
+  });
 }
 </script>
 
